@@ -1,0 +1,546 @@
+\documentclass[12pt, a4paper]{article} % Typ dokumentu i rozmiar czcionki
+\usepackage[utf8]{inputenc} % Kodowanie znaków (UTF-8)
+\usepackage[T1]{fontenc} % Kodowanie fontów
+\usepackage[polish]{babel} % Język polski (dzielenie wyrazów, poprawne formatowanie)
+\usepackage{graphicx} % Do wstawiania obrazów
+\usepackage{amsmath} % Do równań matematycznych
+\usepackage{hyperref} % Do klikalnych linków
+\usepackage{cite} % Do zarządzania cytowaniami
+\usepackage{geometry}
+\geometry{a4paper, margin=2.5cm} % Ustawienie marginesów
+\usepackage[backend=biber,style=numeric]{biblatex}
+\addbibresource{TraficFlowRL.bib} % Nazwa pliku .bib
+
+
+
+\title
+{Podsumowanie prac nad zastosowaniem Reinforcement Learning do sygnalizacją świetlną w celu optymalizacji
+ruchu z wkorzystaniem symulacji SUMO}
+\author{Imię i Nazwisko}
+\date{\today}
+
+\begin{document}
+
+    \maketitle % Generuje tytuł, autora i datę
+
+    \clearpage
+    \tableofcontents
+    \clearpage
+    \section*{Wprowadzenie}
+
+
+
+    Celem niniejszego dokumentu jest przedstawienie dokonań związanych z opracowaniem modelu optymalizującego
+    zarządzanie sygnalizacją świetlną w Rzeszowie przy użyciu metod uczenia się ze wzmocnieniem. Projekt rozpoczął się z
+    ambitnym założeniem, by objąć symulacją całą mapę miasta, co miało na celu kompleksowe odwzorowanie rzeczywistości i
+    uwzględnienie wielu zmiennych wpływających na ruch drogowy. Pomimo rozważania uproszczonych wariantów, na początku
+    dominowało podejście obejmujące całość miasta.
+
+    Jednakże po głębszej analizie problemu, przestudiowaniu literatury naukowej oraz ocenie złożoności i
+    wielowymiarowości zagadnienia, zdecydowano się na ograniczenie skali badania do pojedynczych skrzyżowań. Takie
+    podejście pozwoliło skupić się na przetestowaniu podstawowych mechanizmów i algorytmów w prostszym środowisku, co
+    umożliwiło weryfikację założeń przed ewentualnym rozszerzeniem projektu na większą skalę.
+
+    W dotychczasowych pracach przeprowadzono wstępne badania, obejmujące przegląd literatury oraz narzędzi do symulacji
+    i uczenia się ze wzmocnieniem. Ponadto wykonano pierwsze testy na uproszczonym scenariuszu symulacyjnym, co
+    pozwoliło zidentyfikować podstawowe wyzwania i ograniczenia metod zastosowanych w projekcie. Dokument ten prezentuje
+    wyniki tych prac oraz wnioski, które mogą stanowić podstawę do dalszego rozwoju projektu.
+
+
+    \section{Złożoność sterowania ruchem miejskim za pomocą sygnalizacji świetlnej}
+
+    Sterowanie ruchem miejskim jest zadaniem niezwykle złożonym, co wynika z wielu czynników wpływających na dynamikę
+    ruchu w obszarach miejskich. Nawet przy wykorzystaniu zaawansowanych narzędzi symulacyjnych, takich jak
+    \textit{Simulation of Urban MObility} (SUMO)
+    , oraz przy założeniu eliminacji czynników losowych, problem ten pozostaje wielowymiarowy i skomplikowany.
+
+    \subsection{Wielowymiarowość problemu}
+
+    Wielowymiarowość sterowania ruchem miejskim odnosi się do liczby i różnorodności zmiennych, które należy uwzględnić
+    w procesie decyzyjnym. Do kluczowych aspektów należą:
+
+    \begin{itemize}
+        \item \textbf{Struktura sieci drogowej}
+        : Złożoność układu dróg, skrzyżowań, rond i innych elementów infrastruktury.
+        \item \textbf{Rodzaje uczestników ruchu}
+        : Obecność różnych typów pojazdów (samochody osobowe, autobusy, rowery) oraz pieszych.
+        \item \textbf{Zmienność czasowa}: Zmiany natężenia ruchu w zależności od pory dnia, dnia tygodnia czy sezonu.
+        \item \textbf{Interakcje między uczestnikami ruchu}
+        : Zachowania kierowców, pieszych i innych uczestników ruchu wpływające na płynność i bezpieczeństwo.
+        \item \textbf{Polityki zarządzania ruchem}
+        : Zasady pierwszeństwa, sygnalizacja świetlna, ograniczenia prędkości i inne regulacje.
+    \end{itemize}
+
+    Każdy z tych wymiarów wprowadza dodatkową warstwę złożoności, co sprawia, że modelowanie i optymalizacja ruchu
+    miejskiego wymagają uwzględnienia wielu czynników jednocześnie.
+
+%    \subsection{Deterministyczne modelowanie a złożoność}
+%
+%    Nawet po wyeliminowaniu czynników losowych i przyjęciu założeń deterministycznych, sterowanie ruchem miejskim
+%    pozostaje skomplikowane. Deterministyczne modele zakładają, że przy tych samych warunkach początkowych system
+%    zachowa się w identyczny sposób. Jednak w praktyce:
+%
+%    \begin{itemize}
+%        \item \textbf{Nieliniowość systemu}
+%        : Relacje między zmiennymi nie są liniowe, co utrudnia przewidywanie skutków wprowadzanych zmian.
+%        \item \textbf{Sprzężenia zwrotne}
+%        : Działania podjęte w jednym obszarze mogą wpływać na inne części systemu, prowadząc do nieoczekiwanych
+%        konsekwencji.
+%        \item \textbf{Ograniczenia obliczeniowe}
+%        : Dokładne modelowanie wszystkich aspektów ruchu miejskiego wymaga ogromnej mocy obliczeniowej i zaawansowanych
+%        algorytmów.
+%    \end{itemize}
+
+    \section{Przegląd literatury dotyczącej współczesnych rozwiązań i narzędzi w zakresie sterowania ruchem sygnalizacji
+    świetlnej oraz uczenia modeli z wykorzystaniem metod uczenia ze wzmocnieniem}
+
+    \subsection{Czym jest Simulation of Urban MObility (SUMO) dlaczego został wybrany?}
+
+    \textit{Simulation of Urban MObility} (SUMO)
+    to otwartoźródłowy, przenośny, mikroskopowy i ciągły symulator ruchu drogowego, zaprojektowany do obsługi dużych
+    sieci. Rozwijany przez Niemieckie Centrum Lotnictwa i Kosmonautyki (DLR) od 2001 roku, SUMO umożliwia modelowanie
+    systemów transportu intermodalnego, w tym pojazdów drogowych, transportu publicznego oraz pieszych. Dzięki bogatemu
+    zestawowi narzędzi wspierających, takich jak wyszukiwanie tras, wizualizacja, import sieci czy kalkulacja emisji,
+    SUMO stał się wszechstronnym narzędziem do analizy ruchu miejskiego \cite{sumo_website}.
+
+    \subsection{Dlaczego SUMO zostało wybrane jako środowisko symulacyjne}
+
+    Uczenie ze wzmocnieniem (RL) wymaga środowisk symulacyjnych, które są zarówno realistyczne, jak i elastyczne. SUMO
+    spełnia te kryteria z kilku powodów:
+
+    \begin{itemize}
+        \item \textbf{Dokładność mikroskopowa}
+        : SUMO symuluje ruch na poziomie pojedynczych pojazdów i pieszych, co pozwala na precyzyjne modelowanie
+        interakcji w ruchu drogowym \cite{sumo_docs}.
+        \item \textbf{Wsparcie dla różnych trybów transportu}
+        : Możliwość modelowania różnych środków transportu, takich jak samochody, autobusy, rowery czy piesi, umożliwia
+        tworzenie złożonych scenariuszy miejskich.
+        \item \textbf{Interfejsy API do zdalnego sterowania}
+        : SUMO oferuje interfejsy API, takie jak TraCI, które pozwalają na zdalne sterowanie symulacją w czasie
+        rzeczywistym, co jest kluczowe dla implementacji algorytmów RL \cite{sumo_docs}.
+        \item \textbf{Integracja z bibliotekami RL}
+        : Istnieją narzędzia, takie jak SUMO-RL, które upraszczają integrację SUMO z popularnymi bibliotekami RL,
+        umożliwiając szybkie tworzenie i testowanie środowisk dla kontroli sygnalizacji świetlnej \cite{sumo_rl}.
+        \item \textbf{Wszechstronność i rozwój SUMO}
+        : SUMO jest nieocenionym narzędziem w badaniach nad ruchem drogowym, oferującym zaawansowane funkcje w zakresie
+        rozwiązań intermodalnych, łączenia symulatorów oraz rozwoju i walidacji modeli. Jego otwartość i ciągły rozwój
+        czynią go kluczowym narzędziem w symulacjach mikroskopowych ruchu drogowego \cite{Lopez2018}.
+    \end{itemize}
+
+    Dzięki tym cechom, SUMO jest idealnym narzędziem do badań nad zastosowaniem uczenia ze wzmocnieniem w zarządzaniu
+    ruchem miejskim, pozwalając na tworzenie realistycznych i kontrolowanych środowisk symulacyjnych.
+
+    \subsubsection{Wykorzystanie SUMO jako środowiska w uczeniu ze wzmocnieniem}
+
+    SUMO jest zaawansowanym narzędziem symulacyjnym, które znajduje szerokie zastosowanie
+    w badaniach nad uczeniem ze wzmocnieniem (Reinforcement Learning, RL). Dzięki swoim funkcjonalnościom SUMO umożliwia
+    modelowanie złożonych scenariuszy ruchu drogowego, wspierając procesy uczenia agentów w dynamicznie zmieniających
+    się środowiskach.
+
+    Najważniejsze cechy wykorzystania SUMO w kontekście uczenia ze wzmocnieniem obejmują:
+
+    \begin{itemize}
+        \item \textbf{Tworzenie wielu agentów}:
+        SUMO pozwala na definiowanie różnych agentów (np. sygnalizacji świetlnej, pojazdów, pieszych), z których każdy
+        może podejmować swoje unikalne akcje w odpowiedzi na zmieniające się warunki ruchu.
+        \item \textbf{Pozyskiwanie szczegółowych informacji z symulacji}:
+        Narzędzie umożliwia dostęp do bogatego zestawu danych, takich jak prędkość pojazdów, natężenie ruchu, czas
+        oczekiwania na skrzyżowaniach czy zagęszczenie ruchu. Te dane są kluczowe do definiowania stanów środowiska,
+        które są wykorzystywane przez agentów w procesie podejmowania decyzji.
+
+        \item \textbf{Wyznaczanie nagród}:
+        SUMO pozwala na projektowanie mechanizmów nagradzania w oparciu o konkretne cele, takie jak minimalizacja czasu
+        podróży, redukcja korków, czy zwiększenie bezpieczeństwa. Dzięki temu agenci uczą się podejmować optymalne
+        decyzje w oparciu o dynamiczne zmiany w symulowanym środowisku.
+
+        \item \textbf{Elastyczność w modelowaniu scenariuszy}:
+        Narzędzie umożliwia symulację różnorodnych sytuacji drogowych, co pozwala testować skuteczność uczenia ze
+        wzmocnieniem w warunkach bliskich rzeczywistości.
+    \end{itemize}
+
+    SUMO, jako środowisko symulacyjne, dostarcza podstaw do tworzenia zaawansowanych algorytmów RL, które mogą być
+    wykorzystywane do optymalizacji systemów sterowania ruchem drogowym, zwiększając płynność ruchu oraz minimalizując
+    negatywne skutki zatorów komunikacyjnych.
+
+%
+%    \section{Złożoność sterowania sygnalizacją świetlną w miastach z wykorzystaniem Reinforcement Learning}
+%
+%    Zarządzanie sygnalizacją świetlną w miastach to złożone zadanie, wynikające z dynamicznej i nieprzewidywalnej
+%    natury
+%    przepływu ruchu. Tradycyjne metody sterowania często okazują się niewystarczające w optymalizacji efektywności
+%    ruchu, co skłania badaczy do eksploracji adaptacyjnych podejść, takich jak Reinforcement Learning (RL). Modele
+%    RL
+%    mogą uczyć się optymalnych strategii sterowania sygnalizacją świetlną, poprzez interakcję ze środowiskiem ruchu
+%    drogowym, dążąc do minimalizacji korków i poprawy płynności ruchu.
+%
+%    \begin{figure}[h]
+%        \centering
+%        \includegraphics[width=0.8\textwidth]{fig/learning_agent}
+%        \caption{Agent RL do sterowania sygnalizacją świetlną. Agent obserwuje aktualny stan ruchu,
+%            podejmuje decyzje o zmianie sygnalizacji i otrzymuje nagrody na podstawie poprawy przepływu ruchu.
+%            \cite{mousavi2017}}
+%        \label{fig:rl_traffic_signal}
+%    \end{figure}
+%
+%    Jak przedstawiono na Rysunku~\ref{fig:rl_traffic_signal}
+%    , agent RL obserwuje aktualny stan środowiska ruchu, takie jak pozycje pojazdów i długości kolejek, wybiera
+%    działanie polegające na dostosowaniu sygnalizacji świetlnej i otrzymuje nagrodę w zależności od efektywności
+%    przepływu ruchu. Ta interakcja odbywa się iteracyjnie, co pozwala agentowi na naukę optymalnych strategii
+%    sterowania
+%    sygnalizacją świetlną w czasie.
+%
+%    Mousavi i in. (2017) przedstawili agenta RL opartego na głębokim uczeniu, przeznaczonego do sterowania
+%    sygnalizacją
+%    świetlną, szczegółowo opisując interakcję agenta z otoczeniem. W ich badaniu zamieszczono diagram ilustrujący
+%    elementy stanu, działania i nagrody w ramach modelu RL, co zapewnia jasny obraz procesu podejmowania decyzji
+%    przez
+%    agenta \cite[Figura~1]{mousavi2017}.
+%
+%    Wei i Zhang (2022) przeanalizowali zastosowanie głębokiego RL w optymalizacji sygnalizacji świetlnej. Ich
+%    badania
+%    zawierają diagramy przedstawiające strukturę modelu RL, środowisko symulacyjne oraz różne scenariusze ruchu
+%    użyte do
+%    trenowania i testowania. Te ilustracje pomagają zrozumieć architekturę modelu i jego interakcję z różnymi
+%    warunkami
+%    ruchu \cite[Figury~2~i~3]{wei2022}.
+%
+%    Dodatkowo repozytorium GitHub „Reinforcement Learning for Traffic Signal Control” oferuje obszerną kolekcję
+%    zasobów,
+%    w tym kluczowe artykuły, otwarte zbiory danych oraz symulatory ruchu. Repozytorium zawiera diagramy i
+%    wizualizacje
+%    wyjaśniające różne podejścia RL i ich implementacje w systemach sterowania sygnalizacją świetlną, co stanowi
+%    cenne
+%    odniesienie dla praktycznego wdrażania \cite{rlsignals}.
+%
+%    Te zasoby wspólnie podkreślają złożoność sterowania sygnalizacją świetlną i pokazują, jak modele RL można
+%    strukturyzować i stosować do zarządzania ruchem miejskim.
+
+
+    \section{Przykładowe badania dotyczące optymalizacji sygnalizacji świetlnej przy użyciu uczenia ze wzmocnieniem}
+
+    \subsection{Cel optymalizacji}
+    Algorytmy uczenia ze wzmocnieniem (DQN i PPO) zostały zastosowane do optymalizacji sygnalizacji świetlnej na
+    skrzyżowaniu, aby zmaksymalizować płynność ruchu i zminimalizować negatywne skutki związane z korkami. Główne cele
+    optymalizacji obejmowały:
+
+    \begin{itemize}
+        \item \textbf{Minimalizacja czasu oczekiwania pojazdów}
+        – redukcja czasu, przez jaki pojazdy muszą czekać na zielone światło \cite{Louw2022}.
+        \item \textbf{Skrócenie długości kolejek} – zapobieganie tworzeniu się zatorów na pasach ruchu \cite{Louw2022}.
+        \item \textbf{Poprawa średniej prędkości ruchu}
+        – zwiększenie prędkości pojazdów poruszających się przez skrzyżowanie \cite{Louw2022}.
+    \end{itemize}
+
+    \subsection{Równanie Webstera w optymalizacji sygnalizacji świetlnej jako tradycyjne podejście do optymalizacji}
+
+    Równanie Webstera było jednym z tradycyjnych podejść do optymalizacji sygnalizacji świetlnej, które zostało
+    porównane z metodami uczenia ze wzmocnieniem (RL) w tym badaniu \cite{Webster1958}. Równanie to, opisane w sekcji
+    \textbf{2.1 Fixed-time control}
+    , służy do obliczania optymalnego czasu cyklu sygnalizacji świetlnej, minimalizując całkowite opóźnienie na
+    skrzyżowaniu. Równanie Webstera jest zdefiniowane jako:
+
+    \[
+        C_{o} = \frac{1.5 \cdot L + 5}{1 - \sum Y_{i}},
+    \]
+
+    gdzie:
+    \begin{itemize}
+        \item \( C_{o} \) to optymalny czas cyklu w sekundach,
+        \item \( L \) to całkowity czas stracony na cykl w sekundach,
+        \item \( Y_{i} \) to stosunek natężenia ruchu do przepustowości dla każdego krytycznego ruchu w fazie \( i \).
+    \end{itemize}
+
+    Mimo że równanie Webstera jest skuteczne w statycznych warunkach ruchu, nie radzi sobie z dynamicznymi zmianami w
+    natężeniu ruchu, co czyni je mniej elastycznym w porównaniu z nowoczesnymi metodami RL, takimi jak DQN i PPO
+    \cite{Louw2022}.
+
+    \subsection{Przykład badania}
+    Badania przeprowadzono w symulacji z wykorzystaniem oprogramowania SUMO (Simulation of Urban MObility), które
+    zostało zintegrowane z OpenAI Gym, co umożliwiło zastosowanie algorytmów RL w środowisku symulacyjnym
+    \cite{Louw2022}.
+
+    \subsubsection{Konfiguracja skrzyżowania}
+    \begin{itemize}
+        \item \textbf{Model skrzyżowania}
+        : Proste skrzyżowanie z 12 pasami ruchu (każdy pas monitorowany pod kątem długości kolejek i liczby zatrzymanych
+        pojazdów) \cite{Louw2022}.
+        \item \textbf{Definicje faz świateł}
+        : Zdefiniowano różne fazy, np. umożliwiające ruch w kierunku N-S, E-W lub dedykowane dla skrętów
+        \cite{Allsop1971}.
+    \end{itemize}
+
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=0.4\textwidth]{fig/intersection_layout}
+        \caption{Geometria skrzyżowania użytego w badaniach \cite{Louw2022}.}
+        \label{fig:intersection}
+    \end{figure}
+
+    \subsubsection{Wzorce ruchu}
+    Przetestowano cztery różne wzorce ruchu, aby odzwierciedlić rzeczywiste scenariusze:
+
+    \begin{itemize}
+        \item \textbf{P1}: Wysokie natężenie ruchu na głównych drogach \cite{Louw2022}.
+        \item \textbf{P2}: Większy ruch na pasach do skrętu niż na pasach na wprost \cite{Louw2022}.
+        \item \textbf{P3}
+        : Kierunkowy ruch przypominający zjawisko „pływów” – duże natężenie na dwóch prostopadłych drogach
+        \cite{Louw2022}.
+        \item \textbf{P4}: Zmienne natężenie ruchu w czasie na jednej z głównych dróg \cite{Louw2022}.
+    \end{itemize}
+
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=\textwidth]{fig/traffic_patterns}
+        \caption{Wzorce ruchu użyte w badaniach \cite{Louw2022}.}
+        \label{fig:traffic_patterns}
+    \end{figure}
+
+    \subsection{Nagroda dla agenta RL}
+    Nagroda została zaprojektowana w sposób prosty i oparta na karze za czas oczekiwania pojazdów:
+
+    \[
+        R_t = -\sum_{i=1}^{n} w_i^t
+    \]
+
+    gdzie:
+    \begin{itemize}
+        \item \( R_t \) – nagroda w czasie \( t \),
+        \item \( n \) – liczba pojazdów czekających na światłach,
+        \item \( w_i^t \) – czas oczekiwania \( i \)-tego pojazdu \cite{Louw2022}.
+    \end{itemize}
+
+    Algorytmy były uczone, aby maksymalizować sumaryczną nagrodę, co prowadziło do redukcji czasu oczekiwania i poprawy
+    płynności ruchu \cite{Mnih2015}.
+
+    \subsection{Porównanie wyników}
+    DQN i PPO, czyli metody uczenia ze wzmocnieniem (RL), znacznie poprawiły wyniki w porównaniu z tradycyjnymi
+    metodami, takimi jak równanie Webstera, redukując maksymalny czas oczekiwania do około 50 sekund i zapewniając
+    bardziej równomierny przepływ ruchu \cite{Louw2022}
+    . Oba algorytmy były skuteczne w radzeniu sobie z dynamicznymi zmianami we wzorcach ruchu, co czyni je lepszym
+    wyborem do zastosowań w rzeczywistych systemach \cite{Louw2022}.
+
+    W przeciwieństwie do równania Webstera, które jest skuteczne tylko w statycznych warunkach ruchu, metody RL (DQN i
+    PPO) wykazały zdolność do adaptacji do zmiennych warunków ruchu, co przekłada się na lepszą efektywność w
+    zarządzaniu sygnalizacją świetlną. Jak pokazano na rysunkach \ref{fig:phase_webster}, \ref{fig:phase_dqn} i
+    \ref{fig:phase_ppo}
+    , metody RL są znacznie bardziej elastyczne w przełączaniu faz świateł, dostosowując się do aktualnych potrzeb
+    ruchu. W przypadku metody Webstera sekwencje faz są stałe i niezmienne, podczas gdy DQN i PPO dynamicznie zmieniają
+    kolejność faz, aby zminimalizować opóźnienia i długość kolejek.
+
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=\textwidth]{fig/waiting_time_comparison}
+        \caption{Porównanie czasu oczekiwania dla różnych metod \cite{Louw2022}.}
+        \label{fig:waiting_time}
+    \end{figure}
+
+    \subsection{Sekwencje faz świateł}
+    Poniżej przedstawiono przykładowe sekwencje faz świateł dla różnych metod:
+
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=0.6\textwidth]{fig/phase_sequence_webster}
+        \caption
+        {Sekwencja faz świetlnych dla metody Webstera \cite{Louw2022}. Metoda ta opiera się na stałych sekwencjach,
+            które nie dostosowują się do zmiennych warunków ruchu.}
+        \label{fig:phase_webster}
+    \end{figure}
+
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=0.8\textwidth]{fig/phase_sequence_dqn}
+        \caption
+        {Sekwencja faz świetlnych dla metody DQN \cite{Louw2022}. Algorytm DQN dynamicznie dostosowuje kolejność faz,
+            aby zoptymalizować przepływ ruchu.}
+        \label{fig:phase_dqn}
+    \end{figure}
+
+    \begin{figure}[!h]
+        \centering
+        \includegraphics[width=0.8\textwidth]{fig/phase_sequence_ppo.png}
+        \caption{Sekwencja faz świetlnych dla metody PPO \cite{Louw2022}. Podobnie jak DQN,
+            PPO wykazuje elastyczność w przełączaniu faz, ale z większym naciskiem na stabilność polityk.}
+        \label{fig:phase_ppo}
+    \end{figure}
+
+    \subsection{Wnioski}
+    Badania wykazały, że algorytmy uczenia ze wzmocnieniem (DQN i PPO) są skuteczne w optymalizacji sygnalizacji
+    świetlnej, zapewniając lepszą płynność ruchu i redukując czas oczekiwania pojazdów w porównaniu z tradycyjnymi
+    metodami \cite{Louw2022}. Jak pokazano na rysunkach \ref{fig:phase_dqn} i \ref{fig:phase_ppo}
+    , metody RL są znacznie bardziej elastyczne w przełączaniu faz świateł, dostosowując się do aktualnych potrzeb
+    ruchu. W przeciwieństwie do metody Webstera (patrz rysunek \ref{fig:phase_webster}
+    ), która opiera się na stałych sekwencjach, DQN i PPO dynamicznie zmieniają kolejność faz, aby zminimalizować
+    opóźnienia i długość kolejek.
+
+    Wyniki sugerują, że metody te mogą być z powodzeniem zastosowane w rzeczywistych systemach zarządzania ruchem
+    drogowym, szczególnie w środowiskach o zmiennym natężeniu ruchu. Elastyczność i zdolność do adaptacji metod RL
+    sprawiają, że są one lepszym rozwiązaniem w porównaniu do tradycyjnych, statycznych metod sterowania sygnalizacją
+    świetlną \cite{Louw2022}.
+
+
+    \section{Przygotowanie danych do symulacji i implementacji}
+
+    Jak wspomniano we wstępie, na początku projektu przyjęto ambitne założenia, aby trenować modele na pełnej mapie
+    miasta Rzeszów. W związku z tym opracowano i przygotowano mapy Rzeszowa w trzech różnych wariantach dokładności,
+    które mogą być wykorzystane w symulacjach. Poniżej przedstawiono obrazy tych wariantów:
+
+    \begin{itemize}
+        \item \textbf{Wariant 1}
+        : Mapy o niskiej szczegółowości, optymalizowane pod kątem szybkich symulacji, mapa pokazana na rysunku
+        \ref{fig:mapa_wariant1}.
+        \item \textbf{Wariant 2}
+        : Mapy o średniej szczegółowości, równoważące szczegółowość i wydajność, mapa pokazana na rysunku
+        \ref{fig:mapa_wariant2}.
+        \item \textbf{Wariant 3}
+        : Mapy o wysokiej szczegółowości, zawierające precyzyjne odwzorowanie infrastruktury miejskiej co warto zauważyć
+        to nie jest maksymalna dokłdaność mapy tylko tak do której chcieliśmy doążyć, mapa pokazana na
+        rysunku \ref{fig:mapa_wariant3}.
+    \end{itemize}
+
+    \begin{figure}[!h]
+        \centering
+        \includegraphics[width=0.5\textwidth]{fig/s}
+        \caption{Mapa Rzeszowa w wariancie 1: niska szczegółowość, zoptymalizowana pod kątem szybkich symulacji.}
+        \label{fig:mapa_wariant1}
+    \end{figure}
+
+    \begin{figure}[!h]
+        \centering
+        \includegraphics[width=0.5\textwidth]{fig/m}
+        \caption{Mapa Rzeszowa w wariancie 2: średnia szczegółowość, równoważąca szczegółowość i wydajność.}
+        \label{fig:mapa_wariant2}
+    \end{figure}
+
+    \begin{figure}[!h]
+        \centering
+        \includegraphics[width=0.5\textwidth]{fig/l}
+        \caption
+        {Mapa Rzeszowa w wariancie 3: wysoka szczegółowość, z precyzyjnym odwzorowaniem infrastruktury miejskiej.}
+        \label{fig:mapa_wariant3}
+    \end{figure}
+
+    Dane do symulacji zostały pobrane z platformy OpenStreetMap (OSM) dla obszaru Rzeszowa. W celu przystosowania ich do
+    użycia w symulatorze SUMO, dane te zostały odpowiednio zmniejszone i przekonwertowane do formatów obsługiwanych
+    przez SUMO, takich jak \texttt{.net.xml} (sieć drogowa), \texttt{.rou.xml} (trasy pojazdów) oraz
+    \texttt{.add.xml} (dodatkowe elementy infrastruktury)
+    . Do przetwarzania danych wykorzystano następujące narzędzia dostarczane przez SUMO:
+
+    \begin{itemize}
+        \item \textbf{\texttt{netconvert}}: Konwersja danych OSM do formatu \texttt{.net.xml}
+        , umożliwiającego reprezentację sieci drogowej w SUMO.
+        \item \textbf{\texttt{polyconvert}}
+        : Przetwarzanie danych OSM w celu wygenerowania informacji o obszarach (np. budynkach) do wykorzystania w
+        wizualizacjach symulacji.
+        \item \textbf{\texttt{randomTrips.py}}: Generowanie losowych tras pojazdów w formacie \texttt{.rou.xml}
+        na podstawie zdefiniowanej sieci drogowej.
+    \end{itemize}
+
+    W ramach prac nad symulacjami opracowano również algorytm do losowego wyznaczania tras pojazdów na całej mapie
+    Rzeszowa. Algorytm ten wykorzystano do stworzenia punktu odniesienia, który pozwolił na analizę zachowania systemu w
+    kontekście pełnej sieci drogowej.
+
+    \begin{figure}[!h]
+        \centering
+        \includegraphics[width=0.8\textwidth]{fig/BS}
+        \caption
+        {Przykładowe skrzyżowanie z ruchem w symulacji SUMO. Widoczne są pojazdy poruszające się w różnych kierunkach
+        oraz sygnalizacja świetlna.}
+        \label{fig:skrzyzowanie_ruch}
+    \end{figure}
+
+    Pomimo wstępnych założeń i zaawansowanego przygotowania, po głębszej analizie problemu oraz zrozumieniu jego
+    złożoności, podjęto decyzję o zmianie podejścia. Zdecydowano się uprościć początkowe założenia i skupić na
+    stworzeniu funkcjonalnego i intuicyjnego interfejsu
+
+
+    \section{Eksperyment: Odczyt danych i budowa mapy natężenia ruchu}
+
+    W naszym eksperymencie dane z symulacji są odczytywane za pomocą narzędzia
+    \textbf{TraCI} (Traffic Control Interface)
+    , które umożliwia komunikację z symulatorem SUMO w czasie rzeczywistym. Dzięki TraCI możemy zbierać informacje o
+    ruchu drogowym, takie jak:
+    \begin{itemize}
+        \item Liczba pojazdów na poszczególnych pasach ruchu.
+        \item Długość kolejek.
+        \item Prędkość pojazdów.
+        \item Czas oczekiwania na światłach.
+    \end{itemize}
+
+    Te dane są następnie przetwarzane w celu zbudowania \textbf{mapy natężenia ruchu}
+    , która reprezentuje aktywność ruchową na danym obszarze. Mapa ta jest wizualizowana na rysunku
+    \ref{fig:mapa_natezenia_ruchu} i stanowi kluczowy element w naszych badaniach.
+
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=0.8\textwidth]{fig/mapa_natezenia_ruchu}
+        \caption
+        {Mapa natężenia ruchu zbudowana na podstawie danych z symulacji SUMO. Kolory reprezentują natężenie ruchu: od
+        niskiego (zielony) do wysokiego (czerwony).}
+        \label{fig:mapa_natezenia_ruchu}
+    \end{figure}
+
+    \subsection{Budowa mapy natężenia ruchu}
+    Mapa natężenia ruchu jest generowana na podstawie danych odczytywanych z symulacji za pomocą TraCI. Proces ten można
+    podzielić na następujące kroki:
+
+    \begin{enumerate}
+        \item \textbf{Zbieranie danych}:
+        \begin{itemize}
+            \item Dla każdego pasa ruchu odczytywana jest liczba pojazdów (
+            \texttt{traci.lane.getLastStepVehicleNumber(lane\_id)}) oraz długość kolejki (
+            \texttt{traci.lane.getLastStepHaltingNumber(lane\_id)}).
+            \item Dodatkowo zbierane są informacje o prędkości pojazdów (\texttt{traci.vehicle.getSpeed(vehicle\_id)}
+            ) i czasie oczekiwania (\texttt{traci.lane.getWaitingTime(lane\_id)}).
+        \end{itemize}
+
+        \item \textbf{Agregacja danych}:
+        \begin{itemize}
+            \itemDane z poszczególnych pasów ruchu są agregowane w celu uzyskania informacji o natężeniu ruchu na całym
+            obszarze.
+            \item Każdy obszar (np. fragment mapy) jest reprezentowany jako piksel na mapie natężenia ruchu.
+        \end{itemize}
+
+        \item \textbf{Normalizacja i wizualizacja}:
+        \begin{itemize}
+            \item
+            Zebrane dane są normalizowane, aby można je było przedstawić na skali od 0 do 1, gdzie 0 oznacza brak ruchu,
+            a 1 — maksymalne natężenie.
+            \item
+            Następnie dane są wizualizowane jako mapa kolorów, gdzie kolory reprezentują różne poziomy natężenia ruchu
+            (np. zielony — niskie, żółty — średnie, czerwony — wysokie).
+        \end{itemize}
+    \end{enumerate}
+
+    \subsection{Wykorzystanie mapy natężenia ruchu w sieciach konwolucyjnych}
+    Mapa natężenia ruchu jest kluczowym elementem w naszych badaniach, ponieważ pozwala na wykorzystanie
+    \textbf{sieci konwolucyjnych (CNN)}
+    do analizy ruchu drogowego. Dzięki takiej reprezentacji sieć może uczyć się nie tylko wartości liczbowych (np.
+    liczby pojazdów), ale także \textbf{przestrzennych zależności}
+    między różnymi obszarami mapy. Oto, co sieć może uwzględniać:
+    \begin{itemize}
+        \item \textbf{Umiejscowienie natężenia ruchu}: Sieć może rozpoznawać, gdzie występują korki lub wolne obszary.
+        \item \textbf{Kierunek ruchu}
+        : Dzięki analizie zmian natężenia w czasie sieć może przewidywać, w którą stronę porusza się ruch.
+        \item \textbf{Wzorce ruchu}: Sieć może identyfikować powtarzające się wzorce ruchu, np. godziny szczytu.
+    \end{itemize}
+
+    Takie podejście pozwala na bardziej zaawansowaną analizę i optymalizację ruchu drogowego, ponieważ sieć konwolucyjna
+    może uwzględniać nie tylko lokalne, ale również globalne zależności w sieci drogowej.
+
+    \subsection{Przykład zastosowania}
+    W naszym eksperymencie mapa natężenia ruchu jest wykorzystywana do trenowania modelu uczenia maszynowego, który ma
+    na celu optymalizację sygnalizacji świetlnej. Model analizuje mapę natężenia ruchu i na jej podstawie podejmuje
+    decyzje o zmianie faz świateł, aby zminimalizować czas oczekiwania i długość kolejek.
+
+    \subsection{Podsumowanie}
+    Dzięki wykorzystaniu narzędzia TraCI oraz budowie mapy natężenia ruchu możemy efektywnie analizować i optymalizować
+    ruch drogowy w symulacjach. Mapy te są kluczowe dla zastosowania sieci konwolucyjnych, które mogą uwzględniać
+    zarówno wartości liczbowe, jak i przestrzenne zależności w ruchu drogowym. W przyszłości planujemy rozszerzyć to
+    podejście na większe obszary miejskie, aby jeszcze bardziej poprawić efektywność systemów sterowania ruchem.
+
+
+
+    \clearpage
+    \printbibliography
+
+\end{document}
