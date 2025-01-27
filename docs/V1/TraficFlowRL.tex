@@ -150,8 +150,16 @@ ruchu z wkorzystaniem symulacji SUMO}
 
         \item \textbf{Wyznaczanie nagród}:
         SUMO pozwala na projektowanie mechanizmów nagradzania w oparciu o konkretne cele, takie jak minimalizacja czasu
-        podróży, redukcja korków, czy zwiększenie bezpieczeństwa. Dzięki temu agenci uczą się podejmować optymalne
+        podróży, redukcja korków, czy zwiększenie bezpieczeństwa uproszczony schemat działania nagrody oraz obserwacji \ref{fig:sumo_env}. Dzięki temu agenci uczą się podejmować optymalne
         decyzje w oparciu o dynamiczne zmiany w symulowanym środowisku.
+        \begin{figure}[!h]
+        \centering
+        \includegraphics[width=0.8\textwidth]{fig/sumo_env}
+        \caption{Agent RL do sterowania sygnalizacją świetlną. Agent obserwuje aktualny stan ruchu,
+            podejmuje decyzje o zmianie sygnalizacji i otrzymuje nagrody na podstawie poprawy przepływu ruchu.}
+        \label{fig:sumo_env}
+    \end{figure}
+
 
         \item \textbf{Elastyczność w modelowaniu scenariuszy}:
         Narzędzie umożliwia symulację różnorodnych sytuacji drogowych, co pozwala testować skuteczność uczenia ze
@@ -453,7 +461,7 @@ ruchu z wkorzystaniem symulacji SUMO}
     stworzeniu funkcjonalnego i intuicyjnego interfejsu
 
 
-    \section{Eksperyment: Odczyt danych i budowa mapy natężenia ruchu}
+    \section{Odczyt danych z symulacji}
 
     W naszym eksperymencie dane z symulacji są odczytywane za pomocą narzędzia
     \textbf{TraCI} (Traffic Control Interface)
@@ -483,7 +491,7 @@ ruchu z wkorzystaniem symulacji SUMO}
     Mapa natężenia ruchu jest generowana na podstawie danych odczytywanych z symulacji za pomocą TraCI. Proces ten można
     podzielić na następujące kroki:
 
-    \begin{enumerate}
+    \begin{enumera<te}
         \item \textbf{Zbieranie danych}:
         \begin{itemize}
             \item Dla każdego pasa ruchu odczytywana jest liczba pojazdów (
@@ -542,5 +550,5 @@ ruchu z wkorzystaniem symulacji SUMO}
 
     \clearpage
     \printbibliography
-
+    %bitehack 2022-3  1. miejsce AI
 \end{document}
